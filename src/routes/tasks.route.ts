@@ -5,10 +5,10 @@ import middleware from '../utils/middleware';
 
 const tasksRouter = express.Router();
 
-tasksRouter.get('/', asyncHandler(getTasks));
+tasksRouter.get('/', middleware.verifyToken, asyncHandler(getTasks));
 tasksRouter.post(
 	'/',
-	middleware.authenticateToken,
+	middleware.verifyToken,
 	middleware.NewTaskParser,
 	asyncHandler(createTask)
 );

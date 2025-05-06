@@ -3,7 +3,7 @@ import { NewTaskSchema, NewUserSchema } from './schemas';
 import logger from './logger';
 import { z } from 'zod';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { JWT_SECRET } from './config';
+import { COOKIE_OPIONS, FRONTEND_URL, JWT_SECRET } from './config';
 import { AuthenticationRequest } from '../types';
 import User from '../models/user';
 
@@ -17,6 +17,7 @@ const requestLogger = (req: Request, _res: Response, next: NextFunction) => {
 
 const unknowEndpoint = (_req: Request, res: Response) => {
 	res.status(404).send({ error: 'Unknown Enpoint' });
+	return;
 };
 
 const NewUserParser = (req: Request, _res: Response, next: NextFunction) => {
@@ -37,32 +38,79 @@ const NewTaskParser = (req: Request, _res: Response, next: NextFunction) => {
 	}
 };
 
-const authenticateToken = async (
+const verifyToken = async (
 	req: AuthenticationRequest,
 	res: Response,
 	next: NextFunction
-) => {
-	const token = req.cookies.token;
+): Promise<void> => {
+	try {
+		const accessToken = req.cookies.accessToken;
 
-	if (!token) {
-		res.status(401).json({ error: 'User not authenticated or Logout' });
-	} else {
-		try {
-			const user = jwt.verify(token, JWT_SECRET) as JwtPayload;
-			if (!user.id) res.status(401).json({ error: 'Invalid Token' });
-
-			const foundUser = await User.findById(user.id);
-
-			if (!foundUser) {
-				res.clearCookie('token');
-				res.status(404).json({ error: 'User not found' });
-			} else {
-				req.user = foundUser;
-				next();
-			}
-		} catch (error: unknown) {
-			next(error);
+		if (!accessToken) {
+			res.status(401).json({ error: 'User not authenticated or Logout' });
+			return;
 		}
+
+		const user = jwt.verify(accessToken, JWT_SECRET) as JwtPayload;
+		if (!user.id) res.status(401).json({ error: 'Invalid Token' });
+
+		const foundUser = await User.findById(user.id);
+
+		if (!foundUser) {
+			res.clearCookie('accessToken');
+			res.status(404).json({ error: 'User not found' });
+			return;
+		}
+
+		req.user = {
+			id: foundUser._id,
+			email: foundUser.email,
+			username: foundUser.username,
+		};
+		next();
+	} catch (error: unknown) {
+		next(error);
+	}
+};
+
+const refreshToken = async (
+	req: AuthenticationRequest,
+	res: Response,
+	next: NextFunction
+): Promise<void> => {
+	try {
+		const refreshToken = req.cookies.refreshToken;
+
+		if (!refreshToken) {
+			res.status(401).json({ error: 'Refresh token not found' });
+			return;
+		}
+
+		const decoded = jwt.verify(refreshToken, JWT_SECRET) as JwtPayload;
+		const user = await User.findById(decoded.id);
+
+		if (!user || user.refreshToken !== refreshToken) {
+			res.status(403).json({ error: 'Invalid Refresh Token' });
+			return;
+		}
+
+		const accessToken = jwt.sign(
+			{ id: user._id, email: user.email, username: user.username },
+			JWT_SECRET,
+			{
+				expiresIn: '15m',
+			}
+		);
+
+		res.cookie('accessToken', accessToken, {
+			...COOKIE_OPIONS,
+			maxAge: 15 * 60 * 1000, // 15 minutes
+		});
+
+		req.user = { id: user._id, email: user.email, username: user.username };
+		next();
+	} catch (error: unknown) {
+		next(error);
 	}
 };
 
@@ -77,6 +125,13 @@ const errorMiddleware = (
 			logger.error(error.issues);
 			res.status(400).send({ error: error.issues });
 		} else if (error instanceof Error) {
+			if (error.message === 'jwt expired') {
+				logger.error(error.message);
+				res.cookie('fromVerification', true, { httpOnly: false });
+				res.redirect(`${FRONTEND_URL}expire`);
+				return;
+			}
+
 			logger.error(error.message);
 			res.status(400).send({ error: error.message });
 		}
@@ -91,5 +146,6 @@ export default {
 	NewTaskParser,
 	errorMiddleware,
 	unknowEndpoint,
-	authenticateToken,
+	verifyToken,
+	refreshToken,
 };

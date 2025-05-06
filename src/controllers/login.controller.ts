@@ -1,46 +1,49 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 import { ErrorMessage, LoginResponse, UserAuthentication } from '../types';
 import User from '../models/user';
-import { JWT_SECRET } from '../utils/config';
+import { COOKIE_OPIONS, JWT_SECRET } from '../utils/config';
 
 export const loginUser = async (
 	req: Request<unknown, unknown, UserAuthentication>,
 	res: Response<LoginResponse | ErrorMessage>
 ) => {
 	const { email, password, rememberUser } = req.body;
-
 	const user = await User.findOne({ email: email });
-
-	const isPasswordCorrect =
-		user === null ? false : await bcrypt.compare(password, user.passwordHash);
+	const isPasswordCorrect = await user?.comparePassword(password);
 
 	if (!(user && isPasswordCorrect))
-		res.status(401).json({ error: 'Invalid Username or Pasword' });
+		return res.status(403).json({ error: 'Invalid Username or Pasword' });
 
 	if (user) {
-		if (rememberUser) {
-			user.rememberUser = true;
-			await user.save();
-		} else if (user.rememberUser) {
-			user.rememberUser = false;
-			await user.save();
-		}
-		const token = jwt.sign({ id: user._id, username: user.email }, JWT_SECRET, {
-			expiresIn: '1d',
+		const accessToken = jwt.sign(
+			{ id: user._id, email: user.email, username: user.username },
+			JWT_SECRET,
+			{
+				expiresIn: '15m',
+			}
+		);
+
+		const refreshTokenExpiration = rememberUser ? '2d' : '1d';
+
+		const refreshToken = jwt.sign({ id: user._id }, JWT_SECRET, {
+			expiresIn: refreshTokenExpiration,
 		});
 
-		res.cookie('token', token, {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === 'production',
-			sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-			maxAge: 5 * 24 * 60 * 60 * 1000, // 5 day
+		user.rememberUser = rememberUser ? true : false;
+		user.refreshToken = refreshToken;
+		await user.save();
+
+		if (rememberUser) COOKIE_OPIONS.maxAge = 3 * 24 * 60 * 60 * 1000;
+
+		res.cookie('accessToken', accessToken, {
+			...COOKIE_OPIONS,
 		});
 
-		res.status(200).json({
-			message: 'Login Success',
+		res.cookie('refreshToken', refreshToken, COOKIE_OPIONS);
+
+		return res.status(200).json({
 			user: {
 				id: user._id,
 				username: user.username,
@@ -48,6 +51,7 @@ export const loginUser = async (
 				role: user.role,
 				isVerified: user.isVerified,
 				rememberUser: user.rememberUser,
+				tasks: user.tasks,
 			},
 		});
 	}

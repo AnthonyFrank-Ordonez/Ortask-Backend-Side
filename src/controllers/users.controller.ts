@@ -1,8 +1,8 @@
 import { Response, Request } from 'express';
-import bcrypt from 'bcrypt';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
 import {
+	AuthenticationRequest,
 	ErrorMessage,
 	NewUserEntry,
 	RegisterResponse,
@@ -33,13 +33,10 @@ export const registerUser = async (
 ) => {
 	const { email, username, password, role } = req.body;
 
-	const saltRounds: number = 10;
-	const passwordHash = await bcrypt.hash(password, saltRounds);
-
 	const user = new User({
 		email,
 		username,
-		passwordHash,
+		password,
 		role,
 		isVerified: false,
 		rememberUser: false,
@@ -69,14 +66,22 @@ export const registerUser = async (
 		html: emailHtml,
 	});
 
-	res.status(200).json({
+	return res.status(200).json({
 		message: 'User Registered. Please check your email to verify your account',
 	});
 };
 
 // LOGOUT USER ROUTE
-export const logoutUser = (_req: Request, res: Response) => {
-	res.clearCookie('token');
+export const logoutUser = async (req: AuthenticationRequest, res: Response) => {
+	const refreshToken = req.cookies.refreshToken;
+
+	if (refreshToken) {
+		await User.findOneAndUpdate({ refreshToken }, { refreshToken: null });
+	}
+
+	res.clearCookie('accessToken');
+	res.clearCookie('refreshToken');
+
 	res.status(200).json({ message: 'Logout Successfully' });
 };
 
@@ -84,23 +89,22 @@ export const verifyUser = async (req: Request, res: Response<ErrorMessage>) => {
 	const token = req.query.token as string;
 
 	if (!token) {
-		res.redirect(`${FRONTEND_URL}expire`);
-	} else {
-		const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-
-		const user = await User.findById(decoded.userId);
-
-		if (!user) res.status(404).json({ error: 'User not found' });
-
-		if (user?.isVerified) res.redirect(`${FRONTEND_URL}`);
-
-		if (user) {
-			user.isVerified = true;
-			await user.save();
-		}
-
-		res.redirect(`${FRONTEND_URL}`);
+		return res.redirect(`${FRONTEND_URL}expire`);
 	}
+
+	const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+	const user = await User.findById(decoded.userId);
+
+	if (!user) return res.status(404).json({ error: 'User not found' });
+
+	if (user?.isVerified) return res.redirect(`${FRONTEND_URL}`);
+
+	if (user) {
+		user.isVerified = true;
+		await user.save();
+	}
+
+	return res.redirect(`${FRONTEND_URL}`);
 };
 
 export const resendVerification = async (

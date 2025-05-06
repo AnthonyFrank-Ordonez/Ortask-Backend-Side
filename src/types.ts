@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { NewTaskSchema, NewUserSchema } from './utils/schemas';
-import mongoose, { Document } from 'mongoose';
+import mongoose, { Document, HydratedDocument } from 'mongoose';
 import { Request } from 'express';
 
 export type NewUserEntry = z.infer<typeof NewUserSchema>;
@@ -19,20 +19,33 @@ export enum Status {
 	Completed = 'Completed',
 }
 
-export interface MongoUser extends Document {
-	id?: string;
+export enum Roles {
+	Employee = 'Employee',
+	Lead = 'Lead',
+	Manager = 'Manager',
+	Admin = 'Admin',
+}
+
+export interface IUser extends Document {
+	id: string;
 	_id: mongoose.Types.ObjectId;
 	__v?: number;
 	username: string;
 	email: string;
-	passwordHash: string;
-	role: string;
+	password: string;
+	role: Roles;
 	tasks: Array<mongoose.Types.ObjectId>;
 	isVerified: boolean;
 	rememberUser: boolean;
+	refreshToken: string;
+
+	comparePassword: (
+		this: HydratedDocument<IUser>,
+		inputPassword: string
+	) => Promise<boolean>;
 }
 
-export interface MongoTask extends Document {
+export interface ITask extends Document {
 	id?: string;
 	_id: mongoose.Types.ObjectId;
 	__v?: number;
@@ -49,12 +62,17 @@ export interface Users extends SanitizeUser {
 	id?: string;
 	isVerified: boolean;
 	rememberUser: boolean;
+	refreshToken: string;
 	tasks: Array<mongoose.Types.ObjectId>;
 }
 
 export interface Tasks extends NewTaskEntry {
 	_id: mongoose.Types.ObjectId;
 	id?: string;
+	taskName: string;
+	dueDate: Date;
+	priority: Priority;
+	status: Status;
 	slug: string;
 	user: Array<mongoose.Types.ObjectId>;
 }
@@ -63,14 +81,27 @@ export interface LoginUser extends SanitizeUser {
 	id: mongoose.Types.ObjectId;
 	isVerified: boolean;
 	rememberUser: boolean;
+	tasks: Array<mongoose.Types.ObjectId>;
 }
 
 export interface AuthenticationRequest extends Request {
-	user?: MongoUser | null;
+	user?: {
+		id: mongoose.Types.ObjectId | string | undefined | null;
+		email: string;
+		username: string;
+	};
 	cookies: {
-		token: string;
+		accessToken: string;
+		refreshToken: string;
 		userInfo: string;
 	};
+}
+
+export interface cookiesOpt {
+	httpOnly: boolean;
+	secure: boolean;
+	sameSite: boolean | 'strict' | 'lax' | 'none' | undefined;
+	maxAge?: number;
 }
 
 export interface UserAuthentication {
@@ -80,7 +111,6 @@ export interface UserAuthentication {
 }
 
 export interface LoginResponse {
-	message: string;
 	user: LoginUser;
 }
 
@@ -90,7 +120,7 @@ export interface RegisterResponse {
 
 export interface AuthResponse {
 	isAuthenticated: boolean;
-	user: MongoUser;
+	user: IUser;
 }
 
 export interface VerificationEmail {

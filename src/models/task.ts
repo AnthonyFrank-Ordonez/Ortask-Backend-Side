@@ -1,36 +1,43 @@
 import mongoose, { Document } from 'mongoose';
 import uniqueValidator from 'mongoose-unique-validator';
-import { MongoTask } from '../types';
+import { ITask } from '../types';
 
-const taskSchema = new mongoose.Schema<MongoTask>({
-	taskName: {
-		type: String,
-		required: true,
-		minLength: 5,
-	},
-	dueDate: {
-		type: Date,
-		required: true,
-	},
-	priority: {
-		type: String,
-		reduired: true,
-	},
-	status: {
-		type: String,
-		rquired: true,
-	},
-	slug: {
-		type: String,
-		required: true,
-	},
-	user: [
-		{
-			type: mongoose.Schema.Types.ObjectId,
-			ref: 'User',
+const taskSchema = new mongoose.Schema<ITask>(
+	{
+		taskName: {
+			type: String,
+			required: true,
+			minLength: 5,
+			unique: true,
 		},
-	],
-});
+		dueDate: {
+			type: Date,
+			default: Date.now,
+			required: true,
+		},
+		priority: {
+			type: String,
+			reduired: true,
+		},
+		status: {
+			type: String,
+			rquired: true,
+		},
+		slug: {
+			type: String,
+			required: true,
+		},
+		user: [
+			{
+				type: mongoose.Schema.Types.ObjectId,
+				ref: 'User',
+			},
+		],
+	},
+	{
+		timestamps: true,
+	}
+);
 
 taskSchema.set('toJSON', {
 	transform: (_document: Document, returnedObject: Record<string, unknown>) => {
@@ -45,6 +52,6 @@ taskSchema.set('toJSON', {
 
 taskSchema.plugin(uniqueValidator);
 
-const Task = mongoose.model<MongoTask>('Task', taskSchema);
+const Task = mongoose.model<ITask>('Task', taskSchema);
 
 export default Task;
