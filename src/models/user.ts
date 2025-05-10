@@ -34,6 +34,11 @@ const userSchema = new mongoose.Schema<IUser>(
 		isVerified: { type: Boolean, default: false },
 		rememberUser: { type: Boolean, default: false },
 		refreshToken: { type: String },
+		profileImageId: {
+			type: mongoose.Schema.Types.ObjectId,
+			default: null,
+			required: false,
+		},
 	},
 	{
 		timestamps: true,

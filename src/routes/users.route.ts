@@ -11,7 +11,7 @@ import middleware from '../utils/middleware';
 
 const usersRouter = express.Router();
 
-usersRouter.get('/', asyncHandler(getUser));
+usersRouter.get('/', middleware.verifyToken, asyncHandler(getUser));
 usersRouter.post(
 	'/register',
 	middleware.NewUserParser,

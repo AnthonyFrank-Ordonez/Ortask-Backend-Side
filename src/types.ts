@@ -38,6 +38,7 @@ export interface IUser extends Document {
 	isVerified: boolean;
 	rememberUser: boolean;
 	refreshToken: string;
+	profileImageId: mongoose.Types.ObjectId;
 
 	comparePassword: (
 		this: HydratedDocument<IUser>,
@@ -104,10 +105,24 @@ export interface cookiesOpt {
 	maxAge?: number;
 }
 
+export interface TaskUpdate {
+	updatedStatus: string;
+}
+
 export interface UserAuthentication {
 	email: string;
 	password: string;
 	rememberUser: boolean;
+}
+
+export interface UserProfile {
+	username: string;
+	profilePicture: string;
+}
+
+export interface UpdatedUserProfile {
+	username: string;
+	profileImageId?: mongoose.Types.ObjectId;
 }
 
 export interface LoginResponse {
@@ -123,13 +138,31 @@ export interface AuthResponse {
 	user: IUser;
 }
 
-export interface VerificationEmail {
-	message: string;
-	verificationSuccess: boolean;
+export interface UpdateProfileResponse {
+	success: boolean;
+	user: {
+		id: mongoose.Types.ObjectId | undefined;
+		username: string | undefined;
+		hasProfilePicture: boolean;
+	};
+}
+
+export interface UserProfileResponse {
+	success: boolean;
+	user: {
+		id: mongoose.Types.ObjectId;
+		username: string;
+		profilePictureUrl: string | null;
+	};
 }
 
 export interface ErrorMessage {
 	error: string;
+}
+
+export interface VerificationEmail {
+	message: string;
+	verificationSuccess: boolean;
 }
 
 export interface ResendVerification {

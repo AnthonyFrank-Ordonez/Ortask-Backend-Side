@@ -10,6 +10,8 @@ import mongoose from 'mongoose';
 import logger from './utils/logger';
 import { MONGODB_URI, ALLOWED_ORIGINS } from './utils/config';
 import middleware from './utils/middleware';
+import { GridFSBucket } from 'mongodb';
+import profileRouter from './routes/profile.route';
 
 const app = express();
 
@@ -20,6 +22,18 @@ mongoose
 	.connect(MONGODB_URI)
 	.then(() => logger.info('SUCCESSFULLY CONNECTED TO MONGODB'))
 	.catch((error) => logger.error(error));
+
+// SET UP GRIDFS:
+let gfs: GridFSBucket;
+mongoose.connection.once('open', () => {
+	const { db } = mongoose.connection;
+	if (db) {
+		gfs = new GridFSBucket(db, {
+			bucketName: 'profileImages',
+		});
+		console.log('GridFS connection established');
+	}
+});
 
 app.use(express.json());
 app.use(cookieParser());
@@ -47,9 +61,10 @@ app.use('/api/login', loginRouter);
 app.use('/api/check-auth', checkAuthRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/tasks', tasksRouter);
+app.use('/api/profile', profileRouter);
 
 // MIDDLEWARES
 app.use(middleware.unknowEndpoint);
 app.use(middleware.errorMiddleware);
 
-export { app };
+export { app, gfs };
