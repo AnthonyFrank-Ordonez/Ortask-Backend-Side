@@ -52,35 +52,38 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         subject: 'Verify Your Email Address',
         html: emailHtml,
     });
-    res.status(200).json({
+    return res.status(200).json({
         message: 'User Registered. Please check your email to verify your account',
     });
 });
 exports.registerUser = registerUser;
 // LOGOUT USER ROUTE
-const logoutUser = (_req, res) => {
-    res.clearCookie('token');
+const logoutUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const refreshToken = req.cookies.refreshToken;
+    if (refreshToken) {
+        yield user_1.default.findOneAndUpdate({ refreshToken }, { refreshToken: null });
+    }
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
     res.status(200).json({ message: 'Logout Successfully' });
-};
+});
 exports.logoutUser = logoutUser;
 const verifyUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const token = req.query.token;
     if (!token) {
-        res.redirect(`${config_1.FRONTEND_URL}expire`);
+        return res.redirect(`${config_1.FRONTEND_URL}expire`);
     }
-    else {
-        const decoded = jsonwebtoken_1.default.verify(token, config_1.JWT_SECRET);
-        const user = yield user_1.default.findById(decoded.userId);
-        if (!user)
-            res.status(404).json({ error: 'User not found' });
-        if (user === null || user === void 0 ? void 0 : user.isVerified)
-            res.redirect(`${config_1.FRONTEND_URL}`);
-        if (user) {
-            user.isVerified = true;
-            yield user.save();
-        }
-        res.redirect(`${config_1.FRONTEND_URL}`);
+    const decoded = jsonwebtoken_1.default.verify(token, config_1.JWT_SECRET);
+    const user = yield user_1.default.findById(decoded.userId);
+    if (!user)
+        return res.status(404).json({ error: 'User not found' });
+    if (user === null || user === void 0 ? void 0 : user.isVerified)
+        return res.redirect(`${config_1.FRONTEND_URL}`);
+    if (user) {
+        user.isVerified = true;
+        yield user.save();
     }
+    return res.redirect(`${config_1.FRONTEND_URL}`);
 });
 exports.verifyUser = verifyUser;
 const resendVerification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {

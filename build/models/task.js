@@ -10,9 +10,11 @@ const taskSchema = new mongoose_1.default.Schema({
         type: String,
         required: true,
         minLength: 5,
+        unique: true,
     },
     dueDate: {
         type: Date,
+        default: Date.now,
         required: true,
     },
     priority: {
@@ -33,6 +35,8 @@ const taskSchema = new mongoose_1.default.Schema({
             ref: 'User',
         },
     ],
+}, {
+    timestamps: true,
 });
 taskSchema.set('toJSON', {
     transform: (_document, returnedObject) => {

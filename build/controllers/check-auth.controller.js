@@ -12,15 +12,26 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkAuth = void 0;
+exports.refreshUserToken = exports.checkAuth = void 0;
 const user_1 = __importDefault(require("../models/user"));
 const checkAuth = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userData = req.user || null;
     if (userData) {
-        const user = yield user_1.default.findById(userData.id);
+        const user = yield user_1.default.findById(userData.id).select('-password -refreshToken');
         if (user)
             return res.status(200).json({ isAuthenticated: true, user: user });
         return res.status(404).json({ error: 'User Not Found!' });
     }
 });
 exports.checkAuth = checkAuth;
+const refreshUserToken = (req, res) => {
+    const user = req.user;
+    res.status(200).json({
+        user: {
+            id: user === null || user === void 0 ? void 0 : user.id,
+            email: user === null || user === void 0 ? void 0 : user.email,
+            username: user === null || user === void 0 ? void 0 : user.username,
+        },
+    });
+};
+exports.refreshUserToken = refreshUserToken;

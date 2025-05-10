@@ -8,7 +8,7 @@ const users_controller_1 = require("../controllers/users.controller");
 const asyncHandler_1 = __importDefault(require("../utils/asyncHandler"));
 const middleware_1 = __importDefault(require("../utils/middleware"));
 const usersRouter = express_1.default.Router();
-usersRouter.get('/', (0, asyncHandler_1.default)(users_controller_1.getUser));
+usersRouter.get('/', middleware_1.default.verifyToken, (0, asyncHandler_1.default)(users_controller_1.getUser));
 usersRouter.post('/register', middleware_1.default.NewUserParser, (0, asyncHandler_1.default)(users_controller_1.registerUser));
 usersRouter.post('/logout', users_controller_1.logoutUser);
 usersRouter.get('/verify-email', (0, asyncHandler_1.default)(users_controller_1.verifyUser));

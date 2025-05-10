@@ -45,7 +45,13 @@ const userSchema = new mongoose_1.default.Schema({
     isVerified: { type: Boolean, default: false },
     rememberUser: { type: Boolean, default: false },
     refreshToken: { type: String },
+    profileImageId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        default: null,
+        required: false,
+    },
 }, {
+    timestamps: true,
     methods: {
         comparePassword(inputPassword) {
             return bcrypt_1.default.compare(inputPassword, this.password);

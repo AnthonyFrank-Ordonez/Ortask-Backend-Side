@@ -88,7 +88,7 @@ const refreshToken = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
             return;
         }
         const accessToken = jsonwebtoken_1.default.sign({ id: user._id, email: user.email, username: user.username }, config_1.JWT_SECRET, {
-            expiresIn: '30m',
+            expiresIn: '15m',
         });
         res.cookie('accessToken', accessToken, Object.assign(Object.assign({}, config_1.COOKIE_OPIONS), { maxAge: 15 * 60 * 1000 }));
         req.user = { id: user._id, email: user.email, username: user.username };
@@ -105,6 +105,12 @@ const errorMiddleware = (error, _req, res, next) => {
             res.status(400).send({ error: error.issues });
         }
         else if (error instanceof Error) {
+            if (error.message === 'jwt expired') {
+                logger_1.default.error(error.message);
+                res.cookie('fromVerification', true, { httpOnly: false });
+                res.redirect(`${config_1.FRONTEND_URL}expire`);
+                return;
+            }
             logger_1.default.error(error.message);
             res.status(400).send({ error: error.message });
         }

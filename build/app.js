@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.app = void 0;
+exports.gfs = exports.app = void 0;
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
@@ -15,6 +15,8 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const logger_1 = __importDefault(require("./utils/logger"));
 const config_1 = require("./utils/config");
 const middleware_1 = __importDefault(require("./utils/middleware"));
+const mongodb_1 = require("mongodb");
+const profile_route_1 = __importDefault(require("./routes/profile.route"));
 const app = (0, express_1.default)();
 exports.app = app;
 mongoose_1.default.set('strictQuery', false);
@@ -23,6 +25,17 @@ mongoose_1.default
     .connect(config_1.MONGODB_URI)
     .then(() => logger_1.default.info('SUCCESSFULLY CONNECTED TO MONGODB'))
     .catch((error) => logger_1.default.error(error));
+// SET UP GRIDFS:
+let gfs;
+mongoose_1.default.connection.once('open', () => {
+    const { db } = mongoose_1.default.connection;
+    if (db) {
+        exports.gfs = gfs = new mongodb_1.GridFSBucket(db, {
+            bucketName: 'profileImages',
+        });
+        console.log('GridFS connection established');
+    }
+});
 app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
 app.use((0, cors_1.default)({
@@ -44,6 +57,7 @@ app.use('/api/login', login_route_1.default);
 app.use('/api/check-auth', check_auth_route_1.default);
 app.use('/api/users', users_route_1.default);
 app.use('/api/tasks', tasks_route_1.default);
+app.use('/api/profile', profile_route_1.default);
 // MIDDLEWARES
 app.use(middleware_1.default.unknowEndpoint);
 app.use(middleware_1.default.errorMiddleware);

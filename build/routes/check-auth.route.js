@@ -9,4 +9,5 @@ const check_auth_controller_1 = require("../controllers/check-auth.controller");
 const asyncHandler_1 = __importDefault(require("../utils/asyncHandler"));
 const checkAuthRouter = express_1.default.Router();
 checkAuthRouter.get('/', middleware_1.default.verifyToken, (0, asyncHandler_1.default)(check_auth_controller_1.checkAuth));
+checkAuthRouter.post('/refresh', middleware_1.default.refreshToken, check_auth_controller_1.refreshUserToken);
 exports.default = checkAuthRouter;

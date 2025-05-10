@@ -7,7 +7,7 @@ exports.NewUserSchema = zod_1.z.object({
     email: zod_1.z.string().email('PLease Provide a valid email'),
     username: zod_1.z.string().min(3, 'Username must atleast 3 characters'),
     password: zod_1.z.string().min(8, 'Password must be atleast 8 characters'),
-    role: zod_1.z.string(),
+    role: zod_1.z.nativeEnum(types_1.Roles),
 });
 exports.NewTaskSchema = zod_1.z.object({
     taskName: zod_1.z.string().min(5, 'Task nam must be atleast 5'),

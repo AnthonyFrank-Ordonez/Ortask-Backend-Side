@@ -21,12 +21,12 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_1.default.findOne({ email: email });
     const isPasswordCorrect = yield (user === null || user === void 0 ? void 0 : user.comparePassword(password));
     if (!(user && isPasswordCorrect))
-        return res.status(401).json({ error: 'Invalid Username or Pasword' });
+        return res.status(403).json({ error: 'Invalid Username or Pasword' });
     if (user) {
         const accessToken = jsonwebtoken_1.default.sign({ id: user._id, email: user.email, username: user.username }, config_1.JWT_SECRET, {
-            expiresIn: '30m',
+            expiresIn: '15m',
         });
-        const refreshTokenExpiration = rememberUser ? '3d' : '1d';
+        const refreshTokenExpiration = rememberUser ? '2d' : '1d';
         const refreshToken = jsonwebtoken_1.default.sign({ id: user._id }, config_1.JWT_SECRET, {
             expiresIn: refreshTokenExpiration,
         });
@@ -35,7 +35,7 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         yield user.save();
         if (rememberUser)
             config_1.COOKIE_OPIONS.maxAge = 3 * 24 * 60 * 60 * 1000;
-        res.cookie('accessToken', accessToken, Object.assign(Object.assign({}, config_1.COOKIE_OPIONS), { maxAge: 15 * 60 * 1000 }));
+        res.cookie('accessToken', accessToken, Object.assign({}, config_1.COOKIE_OPIONS));
         res.cookie('refreshToken', refreshToken, config_1.COOKIE_OPIONS);
         return res.status(200).json({
             user: {
@@ -45,6 +45,7 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 role: user.role,
                 isVerified: user.isVerified,
                 rememberUser: user.rememberUser,
+                tasks: user.tasks,
             },
         });
     }
