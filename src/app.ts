@@ -40,6 +40,7 @@ app.use(cookieParser());
 app.use(
 	cors({
 		origin: (origin, callback) => {
+			console.log('🚀 ~ origin:', origin);
 			if (!origin) return callback(null, true);
 
 			if (ALLOWED_ORIGINS.indexOf(origin) === -1)

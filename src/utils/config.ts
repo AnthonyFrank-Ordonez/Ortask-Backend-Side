@@ -11,6 +11,8 @@ const JWT_SECRET = process.env.JWT_SECRET!;
 const ALLOWED_ORIGINS: string[] = [
 	'http://localhost:4173',
 	'https://ortask.afordonez.com',
+	'http://localhost:5173',
+	'http://localhost:3002',
 ];
 
 const FRONTEND_URL =
