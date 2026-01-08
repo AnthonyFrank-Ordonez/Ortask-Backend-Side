@@ -15,7 +15,12 @@ const MONGODB_URI = process.env.MONGODB_URI;
 exports.MONGODB_URI = MONGODB_URI;
 const JWT_SECRET = process.env.JWT_SECRET;
 exports.JWT_SECRET = JWT_SECRET;
-const ALLOWED_ORIGINS = ['http://localhost:4173'];
+const ALLOWED_ORIGINS = [
+    'http://localhost:4173',
+    'https://ortask.afordonez.com',
+    'http://localhost:5173',
+    'http://localhost:3002',
+];
 exports.ALLOWED_ORIGINS = ALLOWED_ORIGINS;
 const FRONTEND_URL = process.env.NODE_ENV !== 'production'
     ? process.env.LOCAL_FRONTEND_URL

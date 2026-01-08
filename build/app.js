@@ -40,6 +40,7 @@ app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
+        console.log('🚀 ~ origin:', origin);
         if (!origin)
             return callback(null, true);
         if (config_1.ALLOWED_ORIGINS.indexOf(origin) === -1)
