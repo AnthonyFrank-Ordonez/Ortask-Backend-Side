@@ -47,5 +47,5 @@ const TRANSPORTER = nodemailer_1.default.createTransport({
     },
 });
 exports.TRANSPORTER = TRANSPORTER;
-const EMAIL_TEMPLATE = fs_1.default.readFileSync(path_1.default.join(__dirname, '..', '..', 'template', 'verificationEmail.html'), 'utf-8');
+const EMAIL_TEMPLATE = fs_1.default.readFileSync(path_1.default.join(__dirname, '..', 'template', 'verificationEmail.html'), 'utf-8');
 exports.EMAIL_TEMPLATE = EMAIL_TEMPLATE;

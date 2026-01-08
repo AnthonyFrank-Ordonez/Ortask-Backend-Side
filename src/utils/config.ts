@@ -44,7 +44,7 @@ const TRANSPORTER = nodemailer.createTransport({
 });
 
 const EMAIL_TEMPLATE = fs.readFileSync(
-	path.join(__dirname, '..', '..', 'template', 'verificationEmail.html'),
+	path.join(__dirname, '..', 'template', 'verificationEmail.html'),
 	'utf-8'
 );
 
