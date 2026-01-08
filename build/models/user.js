@@ -80,6 +80,7 @@ userSchema.set('toJSON', {
         delete returnedObject._id;
         delete returnedObject.__v;
         delete returnedObject.passwordHash;
+        return returnedObject;
     },
 });
 userSchema.plugin(mongoose_unique_validator_1.default);

@@ -1,5 +1,5 @@
 import mongoose, { Document, HydratedDocument } from 'mongoose';
-import { IUser } from '../types';
+import { IUser, TransformedObject } from '../types';
 import bcrypt from 'bcrypt';
 import uniqueValidator from 'mongoose-unique-validator';
 
@@ -63,13 +63,15 @@ userSchema.pre('save', async function (next) {
 });
 
 userSchema.set('toJSON', {
-	transform: (_document: Document, returnedObject: Record<string, unknown>) => {
+	transform: (_document: Document, returnedObject: TransformedObject) => {
 		if (returnedObject._id instanceof mongoose.Types.ObjectId) {
 			returnedObject.id = returnedObject._id.toString() || returnedObject.id;
 		}
 		delete returnedObject._id;
 		delete returnedObject.__v;
 		delete returnedObject.passwordHash;
+
+		return returnedObject;
 	},
 });
 

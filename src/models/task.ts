@@ -1,6 +1,6 @@
-import mongoose, { Document } from 'mongoose';
+import mongoose from 'mongoose';
 import uniqueValidator from 'mongoose-unique-validator';
-import { ITask } from '../types';
+import { ITask, TransformedObject } from '../types';
 
 const taskSchema = new mongoose.Schema<ITask>(
 	{
@@ -40,13 +40,15 @@ const taskSchema = new mongoose.Schema<ITask>(
 );
 
 taskSchema.set('toJSON', {
-	transform: (_document: Document, returnedObject: Record<string, unknown>) => {
+	transform: (_document: any, returnedObject: TransformedObject) => {
 		if (returnedObject._id instanceof mongoose.Types.ObjectId) {
 			returnedObject.id = returnedObject._id.toString() || returnedObject.id;
 		}
 		delete returnedObject._id;
 		delete returnedObject.__v;
 		delete returnedObject.passwordHash;
+
+		return returnedObject;
 	},
 });
 

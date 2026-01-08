@@ -98,6 +98,14 @@ export interface AuthenticationRequest extends Request {
 	};
 }
 
+export interface TransformedObject {
+	[key: string]: any;
+	id?: string;
+	_id?: any;
+	__v?: any;
+	passwordHash?: any;
+}
+
 export interface cookiesOpt {
 	httpOnly: boolean;
 	secure: boolean;
