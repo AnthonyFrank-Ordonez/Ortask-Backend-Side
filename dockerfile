@@ -21,6 +21,8 @@ RUN npm ci --only=production
 
 COPY --from=builder /app/build ./build
 
+COPY --from=builder /app/build/template ./build/template
+
 EXPOSE 3002
 
 CMD ["node", "build/index.js"]
